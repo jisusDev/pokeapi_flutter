@@ -11,6 +11,7 @@ class FavoritePokemonScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _FavoritePokemonScreenState createState() => _FavoritePokemonScreenState();
 }
 
@@ -27,9 +28,11 @@ class _FavoritePokemonScreenState extends State<FavoritePokemonScreen> {
                 ? const Icon(Icons.grid_view)
                 : const Icon(Icons.list),
             onPressed: () {
-              setState(() {
-                _isListView = !_isListView;
-              });
+              setState(
+                () {
+                  _isListView = !_isListView;
+                },
+              );
             },
           ),
         ],
@@ -70,7 +73,6 @@ class _FavoritePokemonScreenState extends State<FavoritePokemonScreen> {
 
                 return GestureDetector(
                   onTap: () {
-                    // Navegar a la pantalla de detalles del Pokémon
                     Navigator.push(
                       context,
                       MaterialPageRoute(
