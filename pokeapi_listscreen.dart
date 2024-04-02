@@ -48,7 +48,7 @@ class _ListScreenState extends State<ListScreen> {
   List<String> pokemonTypes = [];
   List<Pokemons> filteredPokemonList = [];
 
-  TextEditingController _typeController = TextEditingController();
+  final TextEditingController _typeController = TextEditingController();
   bool isLoading = true;
 
   @override
@@ -58,34 +58,37 @@ class _ListScreenState extends State<ListScreen> {
   }
 
   Future<void> getPokemon() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? favoritePokemonIds =
-        prefs.getStringList('favoritePokemonIds');
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  List<String>? favoritePokemonIds = prefs.getStringList('favoritePokemonIds');
 
-    final response =
-        await Dio().get("https://pokeapi.co/api/v2/pokemon?limit=20");
-    final List<dynamic> results = response.data['results'];
+  final response = await Dio().get("https://pokeapi.co/api/v2/pokemon?limit=20");
 
-    for (var pokemonData in results) {
-      final pokemonResponse = await Dio().get(pokemonData['url']);
-      final pokemon = Pokemons.fromJson(pokemonResponse.data);
-      pokemonList.add(pokemon);
-      if (!pokemonTypes.contains(pokemon.types[0].type.name)) {
-        pokemonTypes.add(pokemon.types[0].type.name);
-      }
+  final List<dynamic> results = response.data['results'];
+  List<Future<Response>> pokemonFutures =
+      results.map((pokemonData) => Dio().get(pokemonData['url'])).toList();
 
-      if (favoritePokemonIds != null &&
-          favoritePokemonIds.contains(pokemon.id.toString())) {
-        favoritePokemonList.add(pokemon);
-      }
-    }
+  List<Response> pokemonResponses = await Future.wait(pokemonFutures);
 
-    filteredPokemonList = List<Pokemons>.from(pokemonList);
+  pokemonList = pokemonResponses
+      .map((pokemonResponse) => Pokemons.fromJson(pokemonResponse.data))
+      .toList();
 
-    setState(() {
-      isLoading = false;
-    });
-  }
+  pokemonTypes = pokemonList
+      .map((pokemon) => pokemon.types[0].type.name)
+      .toSet()
+      .toList();
+
+  favoritePokemonList = favoritePokemonIds != null
+      ? pokemonList
+          .where((pokemon) => favoritePokemonIds.contains(pokemon.id.toString()))
+          .toList()
+      : [];
+
+
+  setState(() {
+    isLoading = false;
+  });
+}
 
   Color getColorForType(String type) {
     switch (type.toLowerCase()) {
@@ -261,7 +264,7 @@ class _ListScreenState extends State<ListScreen> {
                 ),
               ],
             ),
-            if (isLoading) // Si isLoading es true, muestra el GIF de carga
+            if (isLoading)
               Positioned(
                 top: 0,
                 left: 0,
@@ -269,11 +272,11 @@ class _ListScreenState extends State<ListScreen> {
                 bottom: 0,
                 child: Center(
                   child: Opacity(
-                    opacity: 0.7, // Transparencia del GIF
+                    opacity: 0.7,
                     child: Image.asset(
                       'assets/loading.gif',
-                      width: 50, // Ancho del GIF
-                      height: 50, // Alto del GIF
+                      width: 50,
+                      height: 50,
                       fit: BoxFit.cover,
                     ),
                   ),
