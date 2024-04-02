@@ -15,52 +15,13 @@ class _HomePokemonState extends State<HomePokemon> {
   late Color _backgroundColor;
   double _progressValue = 0.0;
   late Timer _colorTimer;
-Color getColorForType(String type) {
-    switch (type.toLowerCase()) {
-      case 'fire':
-        return const Color.fromARGB(255, 255, 110, 100);
-      case 'water':
-        return const Color.fromARGB(255, 94, 182, 255);
-      case 'grass':
-        return const Color.fromARGB(255, 93, 208, 97);
-      case 'electric':
-        return const Color.fromARGB(255, 255, 212, 82);
-      case 'ice':
-        return Colors.cyan;
-      case 'fighting':
-        return Colors.orange;
-      case 'poison':
-        return Colors.purple;
-      case 'ground':
-        return Colors.brown;
-      case 'flying':
-        return Colors.indigo;
-      case 'psychic':
-        return Colors.pink;
-      case 'bug':
-        return Colors.lime;
-      case 'rock':
-        return Colors.grey;
-      case 'ghost':
-        return Colors.deepPurple;
-      case 'dark':
-        return Colors.brown;
-      case 'dragon':
-        return Colors.deepPurple;
-      case 'steel':
-        return Colors.blueGrey;
-      case 'fairy':
-        return Colors.pinkAccent;
-      default:
-        return Colors.grey;
-    }
-  }
+
   @override
   void initState() {
     super.initState();
     _backgroundColor = Colors.blue;
     _startColorAnimation();
-    _startLoading(); // Iniciar carga automáticamente
+    _startLoading();
   }
 
   void _startColorAnimation() {
@@ -97,7 +58,7 @@ Color getColorForType(String type) {
 
   @override
   void dispose() {
-    _colorTimer.cancel(); // Cancelar el Timer cuando el widget se dispose
+    _colorTimer.cancel();
     super.dispose();
   }
 
@@ -163,14 +124,14 @@ Color getColorForType(String type) {
                     padding: const EdgeInsets.all(8.0),
                     child: LinearProgressIndicator(
                       value: _progressValue,
-                      backgroundColor: Color.fromARGB(255, 0, 0, 0),
+                      backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                       valueColor:
                           AlwaysStoppedAnimation<Color>(_backgroundColor),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                         color: Color.fromARGB(255, 247, 245, 245)),
                     child: const Text(
                       'Cargando...',
