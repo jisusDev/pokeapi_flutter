@@ -1,4 +1,5 @@
 import "package:pokeapi_application/widgets/widgets.dart";
+import 'package:http/http.dart' as http;
 
 void main() => runApp(const ListScreen());
 
@@ -54,41 +55,65 @@ class _ListScreenState extends State<ListScreen> {
   @override
   void initState() {
     super.initState();
-    getPokemon();
+    fetchPokemons();
   }
 
-  Future<void> getPokemon() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  List<String>? favoritePokemonIds = prefs.getStringList('favoritePokemonIds');
+  Future<void> fetchPokemons() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=20'),
+      );
 
-  final response = await Dio().get("https://pokeapi.co/api/v2/pokemon?limit=20");
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        final List<dynamic> results = jsonData['results'];
 
-  final List<dynamic> results = response.data['results'];
-  List<Future<Response>> pokemonFutures =
-      results.map((pokemonData) => Dio().get(pokemonData['url'])).toList();
+        List<Future<http.Response>> futures = results.map((result) {
+          return http.get(Uri.parse(result['url']));
+        }).toList();
 
-  List<Response> pokemonResponses = await Future.wait(pokemonFutures);
+        final List<http.Response> responses = await Future.wait(futures);
 
-  pokemonList = pokemonResponses
-      .map((pokemonResponse) => Pokemons.fromJson(pokemonResponse.data))
-      .toList();
+        for (var response in responses) {
+          if (response.statusCode == 200) {
+            final pokemonData = json.decode(response.body);
+            final pokemon = Pokemons.fromJson(pokemonData);
+            setState(() {
+              pokemonList.add(pokemon);
+              filteredPokemonList = List<Pokemons>.from(pokemonList);
+            });
+          }
+        }
 
-  pokemonTypes = pokemonList
-      .map((pokemon) => pokemon.types[0].type.name)
-      .toSet()
-      .toList();
+        setState(() {
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load pokemons');
+      }
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      print('Error fetching pokemons: $error');
+    }
+  }
 
-  favoritePokemonList = favoritePokemonIds != null
-      ? pokemonList
-          .where((pokemon) => favoritePokemonIds.contains(pokemon.id.toString()))
-          .toList()
-      : [];
+  List<Pokemons> filterPokemonsByName(String name) {
+    return pokemonList
+        .where((pokemon) => pokemon.name.toLowerCase().contains(name.toLowerCase()))
+        .toList();
+  }
 
-
-  setState(() {
-    isLoading = false;
-  });
-}
+  void searchByName(String name) {
+    setState(() {
+      if (name.isEmpty) {
+        filteredPokemonList = List<Pokemons>.from(pokemonList);
+      } else {
+        filteredPokemonList = filterPokemonsByName(name);
+      }
+    });
+  }
 
   Color getColorForType(String type) {
     switch (type.toLowerCase()) {
@@ -131,22 +156,6 @@ class _ListScreenState extends State<ListScreen> {
     }
   }
 
-  List<Pokemons> filterPokemonsByType(String type) {
-    return pokemonList
-        .where((pokemon) => pokemon.types.any((t) => t.type.name == type))
-        .toList();
-  }
-
-  void searchByType(String type) {
-    setState(() {
-      if (type.isEmpty) {
-        filteredPokemonList = List<Pokemons>.from(pokemonList);
-      } else {
-        filteredPokemonList = filterPokemonsByType(type);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -164,12 +173,12 @@ class _ListScreenState extends State<ListScreen> {
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.search),
                         onPressed: () {
-                          searchByType(_typeController.text.toLowerCase());
+                          searchByName(_typeController.text.toLowerCase());
                         },
                       ),
                     ),
                     onSubmitted: (value) {
-                      searchByType(value.toLowerCase());
+                      searchByName(value.toLowerCase());
                     },
                   ),
                   actions: [
@@ -203,65 +212,58 @@ class _ListScreenState extends State<ListScreen> {
                   ),
                 ),
                 SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10.0,
-                    mainAxisSpacing: 10.0,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (BuildContext context, int index) {
-                      final pokemon = filteredPokemonList.isNotEmpty
-                          ? filteredPokemonList[index]
-                          : pokemonList[index];
-                      final color = getColorForType(pokemon.types[0].type.name);
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PokemonDetailScreen(
-                                pokemon: pokemon,
-                                favoritePokemonList: favoritePokemonList,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          elevation: 3.0,
-                          color: color,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              FadeInImage.assetNetwork(
-                                placeholder: 'assets/loading.gif',
-                                image:
-                                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png",
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                pokemon.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text('ID: ${pokemon.id}'),
-                              Container(
-                                width: 20,
-                                height: 20,
-                                color:
-                                    getColorForType(pokemon.types[0].type.name),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: filteredPokemonList.isNotEmpty
-                        ? filteredPokemonList.length
-                        : pokemonList.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10.0,
+        mainAxisSpacing: 10.0,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          final pokemon = filteredPokemonList.isNotEmpty
+              ? filteredPokemonList[index]
+              : pokemonList[index];
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PokemonDetailScreen(
+                    pokemon: pokemon,
+                    favoritePokemonList: favoritePokemonList,
                   ),
                 ),
+              );
+            },
+            child: Card(
+              elevation: 3.0,
+              color: Colors.green.shade500,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FadeInImage.assetNetwork(
+                    placeholder: "assets/pokeball.png",
+                    image:
+                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${index + 1}.png",
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    pokemon.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text('URL: ${pokemon.url}'),
+                ],
+              ),
+            ),
+          );
+        },
+        childCount: filteredPokemonList.isNotEmpty
+            ? filteredPokemonList.length
+            : pokemonList.length,
+      ),
+    ),
               ],
             ),
             if (isLoading)

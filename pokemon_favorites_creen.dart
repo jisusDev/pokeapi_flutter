@@ -42,12 +42,11 @@ class _FavoritePokemonScreenState extends State<FavoritePokemonScreen> {
               itemCount: widget.favoritePokemonList.length,
               itemBuilder: (context, index) {
                 final pokemon = widget.favoritePokemonList[index];
-                widget.getColorForType(pokemon.types[0].type.name);
                 return ListTile(
                   leading: Image.network(
-                      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png"),
+                      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"),
                   title: Text(pokemon.name),
-                  subtitle: Text('ID: ${pokemon.id}'),
+                  subtitle: Text('ID: ${pokemon.name}'),
                   trailing: IconButton(
                     icon: const Icon(Icons.star, color: Colors.yellow),
                     onPressed: () {
@@ -68,8 +67,7 @@ class _FavoritePokemonScreenState extends State<FavoritePokemonScreen> {
               itemCount: widget.favoritePokemonList.length,
               itemBuilder: (context, index) {
                 final pokemon = widget.favoritePokemonList[index];
-                final color =
-                    widget.getColorForType(pokemon.types[0].type.name);
+                final color = Colors.green.shade400;
 
                 return GestureDetector(
                   onTap: () {
@@ -90,12 +88,12 @@ class _FavoritePokemonScreenState extends State<FavoritePokemonScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.network(
-                          "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png",
+                          "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
                           height: 110,
                         ),
                         const SizedBox(height: 10),
                         Text(pokemon.name),
-                        Text('ID: ${pokemon.id}'),
+                        Text('ID: ${pokemon.name}'),
                       ],
                     ),
                   ),

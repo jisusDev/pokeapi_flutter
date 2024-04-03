@@ -61,8 +61,7 @@ class _PokemonDetailScreenState extends State<PokemonDetailScreen> {
 
   Widget _buildAboutSection() {
     var width = MediaQuery.of(context).size.width;
-    double heightInInches = widget.pokemon.height * 3.93701;
-    double weightInKg = widget.pokemon.weight * 0.1;
+   
     return Column(
       children: [
         Padding(
@@ -109,7 +108,7 @@ class _PokemonDetailScreenState extends State<PokemonDetailScreen> {
               ),
               Expanded(
                 child: Text(
-                  '${heightInInches.toStringAsFixed(2)} inches',
+                  'inches',
                   style: const TextStyle(
                       color: Colors.black,
                       fontSize: 20,
@@ -136,7 +135,7 @@ class _PokemonDetailScreenState extends State<PokemonDetailScreen> {
               ),
               Expanded(
                 child: Text(
-                  '${weightInKg.toStringAsFixed(2)} kg',
+                  'kg',
                   style: const TextStyle(
                       color: Colors.black,
                       fontSize: 20,
@@ -153,11 +152,10 @@ class _PokemonDetailScreenState extends State<PokemonDetailScreen> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    Color appBarColor = getColorForType(widget.pokemon.types[0].type.name);
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: appBarColor,
+        backgroundColor: Colors.green.shade400,
         title: Text(
           widget.pokemon.name,
           style: const TextStyle(fontSize: 25),
@@ -178,14 +176,14 @@ class _PokemonDetailScreenState extends State<PokemonDetailScreen> {
                   prefs.setStringList(
                       'favoritePokemonIds',
                       widget.favoritePokemonList
-                          .map((e) => e.id.toString())
+                          .map((e) => e.name.toString())
                           .toList());
                 } else {
                   widget.favoritePokemonList.remove(widget.pokemon);
                   prefs.setStringList(
                       'favoritePokemonIds',
                       widget.favoritePokemonList
-                          .map((e) => e.id.toString())
+                          .map((e) => e.name.toString())
                           .toList());
                 }
               });
@@ -198,11 +196,11 @@ class _PokemonDetailScreenState extends State<PokemonDetailScreen> {
         children: [
           Container(
             width: screenWidth,
-            color: appBarColor,
+            color: Colors.green.shade400,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Image.network(
-                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${widget.pokemon.id}.png",
+                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25png",
                 width: 100,
                 height: 300,
                 fit: BoxFit.cover,
